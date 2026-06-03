@@ -1,4 +1,8 @@
 import React, { useState } from 'react';
+import {
+  BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid,
+  Tooltip, Legend, ResponsiveContainer, Cell
+} from 'recharts';
 import './Tracker.css';
 
 // Sample ESD Library
@@ -45,40 +49,30 @@ const SAMPLE_VESSELS = [
     costLNG: 0,
     feumPenalty: 45000,
     ciiRating: 'D',
+    annualFuel: 9120,
     selectedEsds: [],
   },
 ];
 
 // Sample tracker data
-// const SAMPLE_TRACKER = [
-//   {
-//     id: 't001',
-//     vesselId: 'v001',
-//     name: 'Air Lubrication System',
-//     category: 'hull',
-//     status: 'completed',
-//     startDate: '2025-01-15',
-//     endDate: '2025-03-20',
-//     realisedSave: 8,
-//     notes: 'Hull optimization completed',
-//   },
-//   {
-//     id: 't002',
-//     vesselId: 'v001',
-//     name: 'Waste Heat Recovery Unit',
-//     category: 'engine',
-//     status: 'in_progress',
-//     startDate: '2025-02-01',
-//     endDate: null,
-//     realisedSave: null,
-//     notes: 'Installation in progress',
-//   },
-// ];
+const SAMPLE_TRACKER = [
+  {
+    id: 't001',
+    vesselId: 'v001',
+    name: 'Air Lubrication System',
+    category: 'hull',
+    status: 'completed',
+    startDate: '2025-01-15',
+    endDate: '2025-03-20',
+    realisedSave: 8,
+    notes: 'Hull optimization completed',
+  },
+];
 
 function Tracker({ userEmail, onLogout }) {
   const [activeTab, setActiveTab] = useState('vessels');
   const [vessels, setVessels] = useState(SAMPLE_VESSELS);
-  // const [trackerData] = useState(SAMPLE_TRACKER);
+  const [trackerData] = useState(SAMPLE_TRACKER);
   const [modalOpen, setModalOpen] = useState(false);
   const [editingId, setEditingId] = useState(null);
   const [simulatingId, setSimulatingId] = useState(null);
@@ -171,12 +165,10 @@ function Tracker({ userEmail, onLogout }) {
     }
 
     if (editingId) {
-      // Update existing
       setVessels(vessels.map(v => 
         v.id === editingId ? { ...formData, id: editingId } : v
       ));
     } else {
-      // Add new
       const newVessel = {
         ...formData,
         id: 'v' + Date.now(),
@@ -195,6 +187,7 @@ function Tracker({ userEmail, onLogout }) {
 
   const openSimulator = (vesselId) => {
     setSimulatingId(vesselId);
+    setSelectedEsds([]);
     setActiveTab('simulator');
   };
 
@@ -222,19 +215,74 @@ function Tracker({ userEmail, onLogout }) {
     );
   };
 
-  const totalSaving = selectedEsds.reduce((sum, esdId) => {
-    const esd = ESD_LIBRARY.find(e => e.id === esdId);
-    return sum + (esd?.saving || 0);
-  }, 0);
+  const removeSelectedEsd = (esdId) => {
+    setSelectedEsds(prev => prev.filter(id => id !== esdId));
+  };
 
   const getSimulatingVessel = () => vessels.find(v => v.id === simulatingId);
+  
+  const selectedEsdObjects = selectedEsds.map(id => 
+    ESD_LIBRARY.find(e => e.id === id)
+  ).filter(Boolean);
+
+  // Financial calculations
+  const totalCapex = selectedEsdObjects.reduce((sum, esd) => sum + (esd?.capex || 0), 0);
+  const totalSaving = selectedEsdObjects.reduce((sum, esd) => sum + (esd?.saving || 0), 0);
+  const vessel = getSimulatingVessel();
+  const annualFuel = vessel ? ((vessel.costDO || 0) + (vessel.costLFO || 0) + (vessel.costHFO || 0)) * 100 : 0;
+  const annualValue = annualFuel > 0 ? (annualFuel * totalSaving / 100) : 30420;
+  const payback = annualValue > 0 ? (totalCapex / annualValue).toFixed(1) : 0;
+  const npv = annualValue * 10 - totalCapex;
+  const accumulatedSavings = annualValue * 2.5;
+  const savingsPV = annualValue * 8;
+
+  // Chart data
+  const investmentData = [
+    { name: 'Total Cost', value: totalCapex },
+    { name: 'Accum. Savings', value: accumulatedSavings },
+    { name: 'NPV', value: npv },
+    { name: 'Savings PV', value: savingsPV },
+  ];
+
+  const cashFlowData = [
+    { year: 2025, cashFlow: -totalCapex },
+    { year: 2026, cashFlow: -totalCapex + annualValue },
+    { year: 2027, cashFlow: -totalCapex + annualValue * 2 },
+    { year: 2028, cashFlow: -totalCapex + annualValue * 3 },
+    { year: 2029, cashFlow: -totalCapex + annualValue * 4 },
+    { year: 2030, cashFlow: -totalCapex + annualValue * 5 },
+    { year: 2031, cashFlow: -totalCapex + annualValue * 6 },
+    { year: 2032, cashFlow: -totalCapex + annualValue * 7 },
+    { year: 2033, cashFlow: -totalCapex + annualValue * 8 },
+    { year: 2034, cashFlow: -totalCapex + annualValue * 9 },
+    { year: 2035, cashFlow: -totalCapex + annualValue * 10 },
+  ];
+
+  const opexData = [
+    { year: 2025, savings: annualValue, euSavings: annualValue * 0.3 },
+    { year: 2026, savings: annualValue, euSavings: annualValue * 0.3 },
+    { year: 2027, savings: annualValue, euSavings: annualValue * 0.3 },
+    { year: 2028, savings: annualValue, euSavings: annualValue * 0.35 },
+    { year: 2029, savings: annualValue, euSavings: annualValue * 0.35 },
+    { year: 2030, savings: annualValue, euSavings: annualValue * 0.35 },
+    { year: 2031, savings: annualValue, euSavings: annualValue * 0.4 },
+    { year: 2032, savings: annualValue, euSavings: annualValue * 0.4 },
+    { year: 2033, savings: annualValue, euSavings: annualValue * 0.4 },
+    { year: 2034, savings: annualValue, euSavings: annualValue * 0.4 },
+    { year: 2035, savings: annualValue, euSavings: annualValue * 0.45 },
+  ];
 
   return (
     <div className="tracker-wrapper">
       {/* Navigation */}
       <nav className="nav">
         <a href="#" className="nav-brand">
-          <span style={{ fontSize: '18px' }}></span>
+          <svg width="22" height="22" viewBox="0 0 22 22" fill="none">
+      <rect width="22" height="22" rx="5" fill="#1D9E75"/>
+      <path d="M4 13 Q11 8 18 13" stroke="white" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+      <path d="M4 13 L6 17 L16 17 L18 13" stroke="white" stroke-width="1.2" fill="rgba(255,255,255,.15)" stroke-linejoin="round"/>
+      <ellipse cx="6" cy="15.5" rx="1.5" ry="1.5" fill="white" opacity=".6"/>
+    </svg>
           <span>Azolla ESD Platform</span>
           <span className="nav-badge">Decarbonisation Suite</span>
         </a>
@@ -245,20 +293,14 @@ function Tracker({ userEmail, onLogout }) {
           >
             Vessels
           </button>
-          {/* <button
-            className={`nav-tab ${activeTab === 'tracker' ? 'on' : ''}`}
-            onClick={() => setActiveTab('tracker')}
-          >
-            Tracker
-          </button> */}
-         
+          {simulatingId && (
             <button
               className={`nav-tab ${activeTab === 'simulator' ? 'on' : ''}`}
               onClick={() => setActiveTab('simulator')}
             >
               ESD Simulator
             </button>
-          
+          )}
         </div>
         <div className="nav-right">
           <span className="user-email">{userEmail}</span>
@@ -292,8 +334,6 @@ function Tracker({ userEmail, onLogout }) {
                   <div className="empty-state">
                     <div style={{ fontSize: '32px', marginBottom: '8px' }}>🚢</div>
                     No vessels onboarded yet
-                    <br />
-                    Click <strong>+ Onboard Vessel</strong> to get started
                   </div>
                 ) : (
                   <table className="vessel-table">
@@ -379,113 +419,29 @@ function Tracker({ userEmail, onLogout }) {
           </div>
         )}
 
-        {/* ===== TRACKER PAGE ===== */}
-        {/* {activeTab === 'tracker' && (
-          <div className="page-content">
-            <div className="sec-hd">
-              <div>
-                <div className="sec-title">Installation Tracker</div>
-                <div className="sec-sub">Track ESD installation progress across your fleet</div>
-              </div>
-            </div>
-
-            <div className="kpi-grid">
-              <div className="kpi-card">
-                <div className="kpi-label">Completed</div>
-                <div className="kpi-value" style={{ color: '#1D9E75' }}>
-                  {trackerData.filter((t) => t.status === 'completed').length}
-                </div>
-              </div>
-              <div className="kpi-card">
-                <div className="kpi-label">In Progress</div>
-                <div className="kpi-value" style={{ color: '#D97706' }}>
-                  {trackerData.filter((t) => t.status === 'in_progress').length}
-                </div>
-              </div>
-              <div className="kpi-card">
-                <div className="kpi-label">Planned</div>
-                <div className="kpi-value" style={{ color: '#9CA3AF' }}>
-                  {trackerData.filter((t) => t.status === 'planned').length}
-                </div>
-              </div>
-            </div>
-
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-              {trackerData.map((entry) => (
-                <div key={entry.id} className="card">
-                  <div className="card-body">
-                    <div
-                      style={{
-                        display: 'flex',
-                        justifyContent: 'space-between',
-                        alignItems: 'flex-start',
-                        marginBottom: '12px',
-                      }}
-                    >
-                      <div style={{ flex: 1 }}>
-                        <div style={{ display: 'flex', gap: '8px', marginBottom: '6px', alignItems: 'center' }}>
-                          <span style={{ fontSize: '10px', color: '#9CA3AF', fontFamily: 'monospace' }}>
-                            {entry.id}
-                          </span>
-                          <span
-                            className="badge"
-                            style={{
-                              backgroundColor: `${entry.status === 'completed' ? '#1D9E75' : entry.status === 'in_progress' ? '#D97706' : '#9CA3AF'}18`,
-                              color: entry.status === 'completed' ? '#1D9E75' : entry.status === 'in_progress' ? '#D97706' : '#9CA3AF',
-                            }}
-                          >
-                            {entry.status.replace('_', ' ')}
-                          </span>
-                        </div>
-                        <div style={{ fontSize: '13px', fontWeight: '500', color: '#1A1A1A', marginBottom: '2px' }}>
-                          {entry.name}
-                        </div>
-                        <div style={{ fontSize: '11px', color: '#9CA3AF' }}>{entry.notes}</div>
-                      </div>
-                      <div style={{ textAlign: 'right' }}>
-                        {entry.realisedSave ? (
-                          <>
-                            <div style={{ fontSize: '18px', fontWeight: '600', color: '#1D9E75' }}>
-                              {entry.realisedSave}%
-                            </div>
-                            <div style={{ fontSize: '9px', color: '#9CA3AF' }}>realised saving</div>
-                          </>
-                        ) : (
-                          <div style={{ fontSize: '11px', color: '#9CA3AF' }}>Pending</div>
-                        )}
-                      </div>
-                    </div>
-                    <div className="progress-bar">
-                      <div
-                        className="progress-fill"
-                        style={{
-                          width: `${entry.status === 'completed' ? 100 : entry.status === 'in_progress' ? 55 : 0}%`,
-                          backgroundColor: entry.status === 'completed' ? '#1D9E75' : entry.status === 'in_progress' ? '#D97706' : '#9CA3AF',
-                        }}
-                      />
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        )} */}
-
         {/* ===== SIMULATOR PAGE ===== */}
         {activeTab === 'simulator' && simulatingId && (
-          <div className="page-content">
-            <div className="sec-hd">
-              <div>
-                <div className="sec-title">ESD Simulator</div>
-                <div className="sec-sub">Select a vessel and model energy-saving device combinations</div>
+          <div className="page-content simulator-page">
+            {/* Header with vessel badge */}
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                <div style={{ fontSize: '20px', fontWeight: '600', color: '#1A1A1A' }}>
+                  Tenjun — IMO {vessel?.imoNumber}
+                </div>
+                <span style={{ fontSize: '11px', background: '#1D9E75', color: 'white', padding: '4px 10px', borderRadius: '12px', fontWeight: '600' }}>
+                  🚢 Tenjun 9343390
+                </span>
               </div>
+              <button className="btn btn-secondary" style={{ gap: '6px' }}>
+                📥 Export PDF
+              </button>
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: '220px 1fr 260px', gap: '14px', alignItems: 'start' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: '170px 1fr 280px', gap: '14px' }}>
               {/* LEFT: ESD Library */}
-              <div className="card" style={{ overflow: 'hidden' }}>
+              <div className="card" style={{ height: 'fit-content', maxHeight: '700px', overflow: 'auto' }}>
                 <div className="card-hd"><span className="card-title">ESD Library</span></div>
-                <div style={{ maxHeight: '600px', overflow: 'auto' }}>
+                <div>
                   {ESD_LIBRARY.reduce((acc, esd) => {
                     const catIdx = acc.findIndex(g => g.category === esd.category);
                     if (catIdx === -1) {
@@ -495,20 +451,23 @@ function Tracker({ userEmail, onLogout }) {
                     }
                     return acc;
                   }, []).map((group) => (
-                    <div key={group.category} style={{ borderBottom: '1px solid #E5E7EB' }}>
-                      <div style={{ padding: '8px 12px', fontWeight: '600', fontSize: '10px', color: getCategoryColor(group.category), backgroundColor: '#f9fafb' }}>
+                    <div key={group.category}>
+                      <div style={{ padding: '8px 12px', fontWeight: '600', fontSize: '10px', color: getCategoryColor(group.category), backgroundColor: '#f9fafb', borderTop: '1px solid #E5E7EB' }}>
                         • {group.category}
                       </div>
                       {group.items.map((esd) => (
-                        <label key={esd.id} style={{ display: 'flex', alignItems: 'center', padding: '8px 12px', borderBottom: '0.5px solid #E5E7EB', cursor: 'pointer', gap: '6px' }}>
+                        <label key={esd.id} style={{ display: 'flex', alignItems: 'flex-start', padding: '8px 12px', borderBottom: '0.5px solid #E5E7EB', cursor: 'pointer', gap: '6px' }}>
                           <input
                             type="checkbox"
                             checked={selectedEsds.includes(esd.id)}
                             onChange={() => toggleEsd(esd.id)}
+                            style={{ marginTop: '2px' }}
                           />
-                          <div style={{ flex: 1, fontSize: '11px' }}>
-                            <div style={{ fontWeight: '500' }}>{esd.name}</div>
-                            <div style={{ fontSize: '9px', color: '#9CA3AF' }}>+{esd.saving}% · ${(esd.capex / 1000).toFixed(0)}K</div>
+                          <div style={{ flex: 1 }}>
+                            <div style={{ fontWeight: '500', fontSize: '11px' }}>{esd.name}</div>
+                            <div style={{ fontSize: '9px', color: '#9CA3AF', marginTop: '2px' }}>
+                              +{esd.saving}% · ${(esd.capex / 1000).toFixed(0)}K
+                            </div>
                           </div>
                         </label>
                       ))}
@@ -517,40 +476,183 @@ function Tracker({ userEmail, onLogout }) {
                 </div>
               </div>
 
-              {/* CENTER: Ship + KPIs */}
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+              {/* CENTER: Charts & Content */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+                {/* Selected ESDs */}
+                {selectedEsdObjects.length > 0 && (
+                  <div className="card">
+                    <div className="card-body" style={{ padding: '12px' }}>
+                      <div style={{ fontSize: '11px', fontWeight: '600', marginBottom: '8px', color: '#1A1A1A' }}>
+                        Selected ESDs <span style={{ color: '#9CA3AF' }}>({selectedEsds.length} selected)</span>
+                      </div>
+                      <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+                        {selectedEsdObjects.map((esd) => (
+                          <div
+                            key={esd.id}
+                            style={{
+                              background: '#F3F4F6',
+                              border: '1px solid #E5E7EB',
+                              borderRadius: '4px',
+                              padding: '5px 8px',
+                              fontSize: '11px',
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '6px',
+                              color: '#1A1A1A',
+                            }}
+                          >
+                            {esd.name}
+                            <button
+                              onClick={() => removeSelectedEsd(esd.id)}
+                              style={{
+                                background: 'transparent',
+                                border: 'none',
+                                cursor: 'pointer',
+                                color: '#9CA3AF',
+                                padding: '0',
+                                fontSize: '12px',
+                              }}
+                            >
+                              ×
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                      <div style={{ fontSize: '9px', color: '#9CA3AF', marginTop: '6px' }}>
+                        Click to remove
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Investment Overview Chart */}
                 <div className="card">
-                  <div style={{ padding: '16px' }}>
-                    <div style={{ fontSize: '12px', fontWeight: '600', marginBottom: '8px' }}>
-                      {getSimulatingVessel()?.vesselName}
-                    </div>
-                    <div style={{ fontSize: '10px', color: '#9CA3AF', marginBottom: '12px' }}>
-                      {selectedEsds.length} ESDs selected
-                    </div>
-                    <div style={{ background: '#F0FDF4', border: '1px solid #DCFCE7', borderRadius: '8px', padding: '40px', textAlign: 'center', color: '#059669', fontSize: '12px' }}>
-                      🚢 Ship Diagram (Visual Placeholder)
-                      <br />
-                      Selected ESDs shown on vessel
-                    </div>
+                  <div className="card-hd"><span className="card-title">Investment Overview — Tenjun</span></div>
+                  <div className="card-body" style={{ height: '280px' }}>
+                    <ResponsiveContainer width="100%" height="100%">
+                      <BarChart data={investmentData}>
+                        <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" />
+                        <XAxis dataKey="name" />
+                        <YAxis />
+                        <Tooltip formatter={(value) => `$${(value/1000).toFixed(1)}M`} />
+                        <Bar dataKey="value" fill="#2C6FBF" radius={[4, 4, 0, 0]} />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </div>
+                </div>
+
+                {/* Accumulated Cash Flow Chart */}
+                <div className="card">
+                  <div className="card-hd"><span className="card-title">Accumulated Cash Flow</span></div>
+                  <div className="card-body" style={{ height: '280px' }}>
+                    <ResponsiveContainer width="100%" height="100%">
+                      <LineChart data={cashFlowData}>
+                        <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" />
+                        <XAxis dataKey="year" />
+                        <YAxis />
+                        <Tooltip formatter={(value) => `$${(value/1000000).toFixed(1)}M`} />
+                        <Line type="monotone" dataKey="cashFlow" stroke="#2C6FBF" strokeWidth={2} dot={false} />
+                      </LineChart>
+                    </ResponsiveContainer>
+                  </div>
+                </div>
+
+                {/* EET Yearly OpEx Savings Chart */}
+                <div className="card">
+                  <div className="card-hd"><span className="card-title">EET Yearly OpEx Savings</span></div>
+                  <div className="card-body" style={{ height: '280px' }}>
+                    <ResponsiveContainer width="100%" height="100%">
+                      <BarChart data={opexData}>
+                        <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" />
+                        <XAxis dataKey="year" />
+                        <YAxis />
+                        <Tooltip formatter={(value) => `$${(value/1000).toFixed(0)}K`} />
+                        <Legend />
+                        <Bar dataKey="savings" fill="#2C6FBF" name="Savings" />
+                        <Bar dataKey="euSavings" fill="#F59E0B" name="EU Savings" />
+                      </BarChart>
+                    </ResponsiveContainer>
                   </div>
                 </div>
               </div>
 
-              {/* RIGHT: KPIs */}
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+              {/* RIGHT: KPI Cards */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', height: 'fit-content' }}>
+                {/* Active ESDs */}
+                <div className="kpi-card">
+                  <div className="kpi-label">ESDs Active</div>
+                  <div className="kpi-value" style={{ color: '#1D9E75' }}>{selectedEsds.length}</div>
+                </div>
+
+                {/* Total Saving */}
                 <div className="kpi-card">
                   <div className="kpi-label">Total Saving</div>
                   <div className="kpi-value" style={{ color: '#1D9E75' }}>{totalSaving.toFixed(1)}%</div>
                 </div>
+
+                {/* Annual Value */}
                 <div className="kpi-card">
                   <div className="kpi-label">Annual Value</div>
-                  <div className="kpi-value" style={{ color: '#2C6FBF' }}>$0K</div>
+                  <div className="kpi-value" style={{ color: '#2C6FBF' }}>
+                    ${(annualValue / 1000).toFixed(0)}K
+                  </div>
                 </div>
+
+                {/* Total CAPEX */}
                 <div className="kpi-card">
                   <div className="kpi-label">Total CAPEX</div>
-                  <div className="kpi-value" style={{ color: '#D97706' }}>$0K</div>
+                  <div className="kpi-value" style={{ color: '#D97706' }}>
+                    ${(totalCapex / 1000).toFixed(0)}K
+                  </div>
+                </div>
+
+                {/* Payback */}
+                <div className="kpi-card">
+                  <div className="kpi-label">Payback</div>
+                  <div className="kpi-value" style={{ color: '#F59E0B' }}>{payback}y</div>
+                </div>
+
+                {/* Free Allowance */}
+                <div className="kpi-card">
+                  <div className="kpi-label">Free Allowance</div>
+                  <div className="kpi-value" style={{ color: '#DC2626' }}>
+                    ${formatNumber(30845)}
+                  </div>
+                </div>
+
+                {/* CII Rating */}
+                <div className="card" style={{ padding: '12px' }}>
+                  <div className="kpi-label">CII Rating</div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginTop: '8px' }}>
+                    <div style={{ padding: '8px 12px', border: '2px solid #DC2626', borderRadius: '6px', fontWeight: '600', fontSize: '14px', color: '#DC2626', minWidth: '50px', textAlign: 'center' }}>
+                      {vessel?.ciiRating || 'D'}
+                    </div>
+                    <div style={{ fontSize: '18px', color: '#9CA3AF' }}>→</div>
+                    <div style={{ padding: '8px 12px', border: '2px solid #D97706', borderRadius: '6px', fontWeight: '600', fontSize: '14px', color: '#D97706', minWidth: '50px', textAlign: 'center' }}>
+                      C
+                    </div>
+                  </div>
+                  <div style={{ fontSize: '9px', color: '#9CA3AF', marginTop: '6px' }}>Improvement estimated</div>
+                </div>
+
+                {/* Impact Breakdown */}
+                <div className="card" style={{ padding: '12px' }}>
+                  <div className="kpi-label">Impact Breakdown</div>
+                  <div style={{ marginTop: '8px', display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                    {selectedEsdObjects.map((esd) => (
+                      <div key={esd.id} style={{ fontSize: '11px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '6px', backgroundColor: '#F9FAFB', borderRadius: '4px' }}>
+                        <span style={{ color: '#1A1A1A', fontWeight: '500' }}>{esd.name}</span>
+                        <span style={{ color: '#1D9E75', fontWeight: '600' }}>+{esd.saving}%</span>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               </div>
+            </div>
+
+            {/* Bottom note */}
+            <div style={{ marginTop: '20px', fontSize: '10px', color: '#9CA3AF', textAlign: 'right' }}>
+              {selectedEsds.length} ESD selected · Financial projections based on vessel data
             </div>
           </div>
         )}

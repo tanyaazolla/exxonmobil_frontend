@@ -1,0 +1,192 @@
+/* Modern Login Page CSS - Matching Azolla Design System */
+
+:root {
+  --green: #1D9E75;
+  --green-light: #E8F7F2;
+  --blue: #2C6FBF;
+  --ink: #1A1A1A;
+  --ink2: #4B5563;
+  --ink3: #9CA3AF;
+  --bg: #F8F9FA;
+  --surface: #FFFFFF;
+  --border: #E5E7EB;
+  --shadow: 0 1px 3px rgba(0,0,0,.08), 0 1px 2px rgba(0,0,0,.05);
+  --shadow-md: 0 4px 12px rgba(0,0,0,.1);
+  --radius: 8px;
+  --radius-sm: 5px;
+}
+
+.login-wrapper {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, var(--bg) 0%, #F0F4F8 100%);
+  font-family: 'IBM Plex Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
+.login-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-md);
+  padding: 32px 28px;
+  width: 100%;
+  max-width: 360px;
+}
+
+/* Brand Section */
+.login-brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 28px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid var(--border);
+}
+
+.brand-logo {
+  font-size: 32px;
+  line-height: 1;
+}
+
+.brand-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--ink);
+  margin: 0;
+}
+
+.brand-sub {
+  font-size: 11px;
+  color: var(--ink3);
+  margin-top: 2px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-weight: 500;
+}
+
+/* Form */
+.login-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.form-section-title {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--ink3);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 12px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--border);
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.form-label {
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--ink2);
+}
+
+.form-input {
+  padding: 7px 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  font-size: 12px;
+  color: var(--ink);
+  background: var(--surface);
+  transition: all 0.15s;
+  font-family: inherit;
+  outline: none;
+}
+
+.form-input::placeholder {
+  color: var(--ink3);
+}
+
+.form-input:focus {
+  border-color: var(--green);
+  box-shadow: 0 0 0 3px rgba(29, 158, 117, 0.1);
+}
+
+.form-input:disabled {
+  background: var(--bg);
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+/* Error Message */
+.form-error {
+  padding: 10px 12px;
+  background: #FEE2E2;
+  border: 1px solid #FECACA;
+  color: #DC2626;
+  border-radius: var(--radius-sm);
+  font-size: 12px;
+  font-weight: 500;
+}
+
+/* Button */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 8px 14px;
+  border: none;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 500;
+  transition: all 0.15s;
+  font-family: inherit;
+  outline: none;
+}
+
+.btn-primary {
+  background: var(--green);
+  color: white;
+}
+
+.btn-primary:hover:not(:disabled) {
+  background: #158a65;
+}
+
+.btn-primary:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+/* Login Footer */
+.login-footer {
+  text-align: center;
+  font-size: 11px;
+  color: var(--ink3);
+  margin-top: 16px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
+}
+
+/* Responsive */
+@media (max-width: 600px) {
+  .login-card {
+    padding: 24px 20px;
+    margin: 16px;
+  }
+
+  .login-brand {
+    margin-bottom: 20px;
+  }
+
+  .brand-logo {
+    font-size: 28px;
+  }
+}

@@ -122,9 +122,9 @@ body {
 /* ── CONTAINER ── */
 .container {
   flex: 1;
-  max-width: 1280px;
+  max-width: 100%;
   margin: 0 auto;
-  padding: 24px;
+  padding: 12px;
   width: 100%;
   overflow-y: auto;
 }
@@ -169,7 +169,7 @@ body {
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--radius);
-  box-shadow: var(--shadow);
+  box-shadow: none;
   margin-bottom: 16px;
   overflow: hidden;
 }
@@ -266,8 +266,9 @@ body {
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--radius);
-  padding: 14px 16px;
-  box-shadow: var(--shadow);
+  padding: 10px;
+  box-shadow: none;
+  font-size: 16px;
 }
 
 .kpi-label {
@@ -587,4 +588,43 @@ body {
     max-width: 95%;
     max-height: 95vh;
   }
+}
+
+
+.esd-library {
+  height: 930px;
+  overflow-y: auto;
+}
+
+.esd-category {
+  font-size: 10px;
+  font-weight: 600;
+  padding: 8px 12px;
+  background: #fafafa;
+  border-top: 1px solid #e5e7eb;
+  color: #9ca3af;
+}
+
+.esd-item {
+  display: flex;
+  padding: 10px 12px;
+  gap: 8px;
+  border-bottom: 1px solid #e5e7eb;
+  cursor: pointer;
+}
+
+.esd-item:hover {
+  background: #fafafa;
+}
+
+.selected-esd-card {
+  padding: 12px;
+}
+
+.selected-tag {
+  background: #f5f7f8;
+  border: 1px solid #dce2e7;
+  border-radius: 20px;
+  padding: 5px 10px;
+  font-size: 11px;
 }

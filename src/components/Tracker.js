@@ -4,70 +4,13 @@ import {
   Tooltip, Legend, ResponsiveContainer, Cell
 } from 'recharts';
 import './Tracker.css';
+import { ESD_LIBRARY } from '../data/esdLibrary';
+import { SAMPLE_VESSELS } from '../data/vessels';
+import { SAMPLE_TRACKER } from '../data/trackerData';
+import './Simulator/Simulator.css';
 
-// Sample ESD Library
-const ESD_LIBRARY = [
-  { id: 'esd-001', name: 'Premium Hull Paint', category: 'HULL', saving: 2.3, capex: 100000 },
-  { id: 'esd-002', name: 'Hull Additives', category: 'HULL', saving: 1.5, capex: 50000 },
-  { id: 'esd-003', name: 'Optimised Propeller', category: 'PROPULSION', saving: 4.2, capex: 250000 },
-  { id: 'esd-004', name: 'Pre-Swirl Device', category: 'PROPULSION', saving: 3.3, capex: 150000 },
-  { id: 'esd-005', name: 'Post-Swirl (PBC)', category: 'PROPULSION', saving: 2.8, capex: 180000 },
-  { id: 'esd-006', name: 'Ultrasonic Propeller', category: 'PROPULSION', saving: 1.2, capex: 80000 },
-  { id: 'esd-007', name: 'ME Power Optimisation', category: 'ENGINE', saving: 3.5, capex: 200000 },
-  { id: 'esd-008', name: 'Trim Optimisation', category: 'OPERATIONS', saving: 2.1, capex: 50000 },
-  { id: 'esd-009', name: 'Auto-pilot Upgrade', category: 'OPERATIONS', saving: 1.8, capex: 120000 },
-  { id: 'esd-010', name: 'VFD', category: 'AUXILIARY', saving: 0.8, capex: 180000 },
-  { id: 'esd-011', name: 'LED Lighting', category: 'AUXILIARY', saving: 0.9, capex: 80000 },
-  { id: 'esd-012', name: 'Data Auto-logging', category: 'MONITORING', saving: 1.3, capex: 150000 },
-];
 
-// Sample vessel data
-const SAMPLE_VESSELS = [
-  {
-    id: 'v001',
-    month: 1,
-    year: 2026,
-    dockMonth: 3,
-    owner: 'NYK Line',
-    vesselName: 'MV Horizon Star',
-    vesselType: 'Bulk Carrier',
-    buildYear: 2009,
-    flag: 'Panama',
-    classificationSociety: 'ABS',
-    imoNumber: '9876543',
-    grossTonnage: 82000,
-    deadWeight: 82000,
-    sailingDays: 207,
-    nonSteamingDays: 158,
-    euPct: 10,
-    euaCost: 70,
-    costDO: 876,
-    costLFO: 580,
-    costHFO: 499,
-    costLPGP: 0,
-    costLPGB: 0,
-    costLNG: 0,
-    feumPenalty: 45000,
-    ciiRating: 'D',
-    annualFuel: 9120,
-    selectedEsds: [],
-  },
-];
 
-// Sample tracker data
-const SAMPLE_TRACKER = [
-  {
-    id: 't001',
-    vesselId: 'v001',
-    name: 'Air Lubrication System',
-    category: 'hull',
-    status: 'completed',
-    startDate: '2025-01-15',
-    endDate: '2025-03-20',
-    realisedSave: 8,
-    notes: 'Hull optimization completed',
-  },
-];
 
 function Tracker({ userEmail, onLogout }) {
   const [activeTab, setActiveTab] = useState('vessels');
@@ -437,10 +380,23 @@ function Tracker({ userEmail, onLogout }) {
               </button>
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: '170px 1fr 280px', gap: '14px' }}>
-              {/* LEFT: ESD Library */}
-              <div className="card" style={{ height: 'fit-content', maxHeight: '700px', overflow: 'auto' }}>
-                <div className="card-hd"><span className="card-title">ESD Library</span></div>
+            <div style={{
+  marginBottom:'12px'
+}}>
+  <span style={{
+     fontSize:'11px',
+     color:'#999'
+  }}>
+     VESSEL:
+  </span>
+
+  <span className="badge badge-green">
+     🚢 Tenjun 9343390
+  </span>
+</div>
+
+<div className="simulator-layout">              {/* LEFT: ESD Library */}
+<div className="card esd-library">                <div className="card-hd"><span className="card-title">ESD Library</span></div>
                 <div>
                   {ESD_LIBRARY.reduce((acc, esd) => {
                     const catIdx = acc.findIndex(g => g.category === esd.category);
@@ -477,8 +433,8 @@ function Tracker({ userEmail, onLogout }) {
               </div>
 
               {/* CENTER: Charts & Content */}
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-                {/* Selected ESDs */}
+{/* CENTER: Charts & Content */}
+<div className="simulator-center">                {/* Selected ESDs */}
                 {selectedEsdObjects.length > 0 && (
                   <div className="card">
                     <div className="card-body" style={{ padding: '12px' }}>
@@ -525,60 +481,106 @@ function Tracker({ userEmail, onLogout }) {
                   </div>
                 )}
 
-                {/* Investment Overview Chart */}
-                <div className="card">
-                  <div className="card-hd"><span className="card-title">Investment Overview — Tenjun</span></div>
-                  <div className="card-body" style={{ height: '280px' }}>
-                    <ResponsiveContainer width="100%" height="100%">
-                      <BarChart data={investmentData}>
-                        <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" />
-                        <XAxis dataKey="name" />
-                        <YAxis />
-                        <Tooltip formatter={(value) => `$${(value/1000).toFixed(1)}M`} />
-                        <Bar dataKey="value" fill="#2C6FBF" radius={[4, 4, 0, 0]} />
-                      </BarChart>
-                    </ResponsiveContainer>
-                  </div>
-                </div>
 
-                {/* Accumulated Cash Flow Chart */}
-                <div className="card">
-                  <div className="card-hd"><span className="card-title">Accumulated Cash Flow</span></div>
-                  <div className="card-body" style={{ height: '280px' }}>
-                    <ResponsiveContainer width="100%" height="100%">
-                      <LineChart data={cashFlowData}>
-                        <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" />
-                        <XAxis dataKey="year" />
-                        <YAxis />
-                        <Tooltip formatter={(value) => `$${(value/1000000).toFixed(1)}M`} />
-                        <Line type="monotone" dataKey="cashFlow" stroke="#2C6FBF" strokeWidth={2} dot={false} />
-                      </LineChart>
-                    </ResponsiveContainer>
-                  </div>
-                </div>
+                <div className="chart-row">
 
-                {/* EET Yearly OpEx Savings Chart */}
-                <div className="card">
-                  <div className="card-hd"><span className="card-title">EET Yearly OpEx Savings</span></div>
-                  <div className="card-body" style={{ height: '280px' }}>
-                    <ResponsiveContainer width="100%" height="100%">
-                      <BarChart data={opexData}>
-                        <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" />
-                        <XAxis dataKey="year" />
-                        <YAxis />
-                        <Tooltip formatter={(value) => `$${(value/1000).toFixed(0)}K`} />
-                        <Legend />
-                        <Bar dataKey="savings" fill="#2C6FBF" name="Savings" />
-                        <Bar dataKey="euSavings" fill="#F59E0B" name="EU Savings" />
-                      </BarChart>
-                    </ResponsiveContainer>
-                  </div>
-                </div>
-              </div>
+  <div className="card chart-card">
+
+    <div className="card-hd">
+      <span className="card-title">
+        Investment Overview
+      </span>
+    </div>
+
+    <div className="card-body">
+
+<ResponsiveContainer width="100%" height={250}>
+  <BarChart data={investmentData}>
+    <CartesianGrid strokeDasharray="3 3" />
+    <XAxis dataKey="name" />
+    <YAxis />
+    <Tooltip />
+    <Bar dataKey="value">
+      {investmentData.map((entry, index) => (
+        <Cell
+          key={index}
+          fill={index === 0 ? "#D96C63" : "#7694CF"}
+        />
+      ))}
+    </Bar>
+  </BarChart>
+</ResponsiveContainer>
+    </div>
+
+  </div>
+
+  <div className="card chart-card">
+
+    <div className="card-hd">
+      <span className="card-title">
+        Accumulated Cash Flow
+      </span>
+    </div>
+
+    <div className="card-body">
+
+<ResponsiveContainer width="100%" height={250}>
+  <LineChart data={cashFlowData}>
+    <CartesianGrid strokeDasharray="3 3" />
+    <XAxis dataKey="year" />
+    <YAxis />
+    <Tooltip />
+    <Line
+      type="monotone"
+      dataKey="cashFlow"
+      stroke="#2C6FBF"
+      strokeWidth={2}
+    />
+  </LineChart>
+</ResponsiveContainer>
+    </div>
+
+  </div>
+
+</div>
+
+<div className="card opex-card">
+
+  <div className="card-hd">
+    <span className="card-title">
+      EET Yearly OpEx Savings
+    </span>
+  </div>
+
+  <div className="card-body">
+
+<ResponsiveContainer width="100%" height={300}>
+  <BarChart data={opexData}>
+    <CartesianGrid strokeDasharray="3 3" />
+    <XAxis dataKey="year" />
+    <YAxis />
+    <Tooltip />
+    <Legend />
+    <Bar
+      dataKey="savings"
+      fill="#7694CF"
+      name="Fuel Savings"
+    />
+    <Bar
+      dataKey="euSavings"
+      fill="#C7D4EF"
+      name="EU Savings"
+    />
+  </BarChart>
+</ResponsiveContainer>
+  </div>
+
+</div>
+</div>
 
               {/* RIGHT: KPI Cards */}
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', height: 'fit-content' }}>
-                {/* Active ESDs */}
+{/* RIGHT: KPI Cards */}
+<div className="simulator-right">                {/* Active ESDs */}
                 <div className="kpi-card">
                   <div className="kpi-label">ESDs Active</div>
                   <div className="kpi-value" style={{ color: '#1D9E75' }}>{selectedEsds.length}</div>
